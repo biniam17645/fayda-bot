@@ -1,0 +1,8 @@
+python-telegram-bot==20.7
+pytesseract==0.3.10
+PyMuPDF==1.23.8
+rembg==2.0.50
+Pillow==10.1.0
+numpy==1.24.3
+flask==3.0.0
+opencv-python-headless==4.8.1.78

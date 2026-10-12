@@ -1,0 +1,1822 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fayda ID - Digital ID Converter</title>
+
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        /* ========== CSS VARIABLES ========== */
+        :root {
+            --bg-primary: var(--tg-theme-bg-color, #0f0e1a);
+            --bg-secondary: var(--tg-theme-secondary-bg-color, #1a1932);
+            --text-primary: var(--tg-theme-text-color, #ffffff);
+            --text-secondary: var(--tg-theme-hint-color, #8b8ba3);
+            --accent: var(--tg-theme-button-color, #6c5ce7);
+            --accent-hover: #7d6ff0;
+            --accent-text: var(--tg-theme-button-text-color, #ffffff);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --green: #00b894;
+            --orange: #fdcb6e;
+            --red: #fd79a8;
+            --blue: #74b9ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ========== GLASS BACKGROUND ========== */
+        .bg-effects {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-effects .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.2;
+            animation: floatOrb 25s ease-in-out infinite;
+        }
+
+        .bg-effects .orb:nth-child(1) {
+            width: 400px;
+            height: 400px;
+            background: #6c5ce7;
+            top: -150px;
+            right: -100px;
+        }
+
+        .bg-effects .orb:nth-child(2) {
+            width: 350px;
+            height: 350px;
+            background: #00b894;
+            bottom: -100px;
+            left: -80px;
+            animation-delay: -8s;
+        }
+
+        .bg-effects .orb:nth-child(3) {
+            width: 250px;
+            height: 250px;
+            background: #fd79a8;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: -16s;
+        }
+
+        @keyframes floatOrb {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            33% {
+                transform: translate(40px, -30px) scale(1.1);
+            }
+
+            66% {
+                transform: translate(-30px, 40px) scale(0.9);
+            }
+        }
+
+        /* ========== GLASS CARD ========== */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+        }
+
+        .glass:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        /* ========== APP CONTAINER ========== */
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 12px 16px 100px 16px;
+        }
+
+        /* ========== HEADER ========== */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0 12px;
+            border-bottom: 1px solid var(--glass-border);
+            margin-bottom: 16px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-left .logo {
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #6c5ce7, #00b894);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-left .logo span {
+            font-weight: 300;
+            -webkit-text-fill-color: var(--text-secondary);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-right .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 12px 4px 6px;
+            border-radius: 20px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .header-right .user-badge .avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6c5ce7, #00b894);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .header-right .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .header-right .icon-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+        }
+
+        /* ========== STATS BAR ========== */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .stat-item {
+            padding: 12px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .stat-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-item .value {
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #6c5ce7, #00b894);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-item .label {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* ========== NAVIGATION ========== */
+        .nav-menu {
+            display: flex;
+            gap: 4px;
+            background: var(--glass-bg);
+            border-radius: var(--radius-sm);
+            padding: 4px;
+            margin-bottom: 16px;
+            border: 1px solid var(--glass-border);
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .nav-btn {
+            flex: 1;
+            min-width: 52px;
+            padding: 10px 6px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            white-space: nowrap;
+        }
+
+        .nav-btn i {
+            font-size: 16px;
+        }
+
+        .nav-btn.active {
+            background: var(--accent);
+            color: var(--accent-text);
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+        }
+
+        .nav-btn:hover:not(.active) {
+            color: var(--text-primary);
+        }
+
+        /* ========== PAGES ========== */
+        .page {
+            display: none;
+            animation: fadeUp 0.4s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ========== QUICK ACTIONS ========== */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .quick-action {
+            padding: 16px 12px;
+            text-align: center;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--text-primary);
+            font-family: inherit;
+        }
+
+        .quick-action:hover {
+            background: rgba(108, 92, 231, 0.12);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .quick-action .icon {
+            font-size: 28px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .quick-action .label {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .quick-action .sub {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* ========== UPLOAD TYPES ========== */
+        .upload-types {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .upload-type {
+            padding: 16px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 2px solid transparent;
+        }
+
+        .upload-type:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .upload-type.active {
+            border-color: var(--accent);
+            background: rgba(108, 92, 231, 0.08);
+        }
+
+        .upload-type .icon {
+            font-size: 28px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .upload-type .label {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .upload-type .sub {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        .upload-type .badge {
+            font-size: 9px;
+            background: var(--accent);
+            color: white;
+            padding: 1px 8px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+
+        /* ========== UPLOAD AREA ========== */
+        .upload-area {
+            padding: 24px 20px;
+            text-align: center;
+            border: 2px dashed var(--glass-border);
+            border-radius: var(--radius);
+            margin-bottom: 12px;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent);
+            background: rgba(108, 92, 231, 0.05);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--accent);
+            background: rgba(108, 92, 231, 0.1);
+        }
+
+        .upload-area .icon {
+            font-size: 36px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .upload-area .title {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .upload-area .sub {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .upload-area .count {
+            font-size: 11px;
+            color: var(--accent);
+            margin-top: 4px;
+        }
+
+        /* ========== TEMPLATE GRID ========== */
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .template-card {
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 2px solid transparent;
+        }
+
+        .template-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .template-card.active {
+            border-color: var(--accent);
+            background: rgba(108, 92, 231, 0.08);
+        }
+
+        .template-card .preview {
+            width: 100%;
+            aspect-ratio: 3/4;
+            border-radius: 8px;
+            background: var(--glass-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+            border: 1px solid var(--glass-border);
+            overflow: hidden;
+        }
+
+        .template-card .preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .template-card .name {
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 6px;
+        }
+
+        .template-card .badge {
+            font-size: 9px;
+            background: var(--accent);
+            color: white;
+            padding: 1px 8px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-top: 2px;
+        }
+
+        /* ========== SETTINGS ========== */
+        .settings-grid {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .setting-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .setting-group {
+            padding: 12px 14px;
+        }
+
+        .setting-group .label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .setting-group .options {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .setting-group .options .opt {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--text-secondary);
+        }
+
+        .setting-group .options .opt.active {
+            background: var(--accent);
+            color: var(--accent-text);
+            border-color: var(--accent);
+        }
+
+        .setting-group .options .opt:hover:not(.active) {
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+
+        /* ========== CHECKOUT ========== */
+        .checkout-step {
+            display: none;
+            animation: fadeUp 0.4s ease;
+        }
+
+        .checkout-step.active {
+            display: block;
+        }
+
+        .step-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .step-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--glass-border);
+            transition: var(--transition);
+        }
+
+        .step-dot.active {
+            background: var(--accent);
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        .step-dot.done {
+            background: var(--green);
+        }
+
+        /* ========== PACKAGES ========== */
+        .packages {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .package {
+            padding: 16px 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .package:hover {
+            border-color: var(--accent);
+            transform: translateX(4px);
+        }
+
+        .package.selected {
+            border-color: var(--accent);
+            background: rgba(108, 92, 231, 0.08);
+        }
+
+        .package .info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .package .info .title {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .package .info .desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .package .price {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        .package .price .currency {
+            font-size: 12px;
+            font-weight: 400;
+            color: var(--text-secondary);
+        }
+
+        .package .save-badge {
+            font-size: 9px;
+            background: rgba(0, 184, 148, 0.15);
+            color: #00b894;
+            padding: 2px 10px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-top: 2px;
+        }
+
+        /* ========== PAYMENT METHODS ========== */
+        .payment-methods {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .payment-method {
+            padding: 14px 16px;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .payment-method:hover {
+            border-color: var(--accent);
+        }
+
+        .payment-method.selected {
+            border-color: var(--accent);
+            background: rgba(108, 92, 231, 0.08);
+        }
+
+        .payment-method .icon {
+            font-size: 28px;
+        }
+
+        .payment-method .info {
+            flex: 1;
+        }
+
+        .payment-method .info .name {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .payment-method .info .desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .payment-method .check {
+            color: var(--green);
+            font-size: 18px;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .payment-method.selected .check {
+            opacity: 1;
+        }
+
+        /* ========== TRANSACTION INPUT ========== */
+        .transaction-input {
+            padding: 16px;
+        }
+
+        .transaction-input .label {
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .transaction-input .sub {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .transaction-input textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 13px;
+            resize: vertical;
+            min-height: 80px;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .transaction-input textarea:focus {
+            border-color: var(--accent);
+        }
+
+        .transaction-input .example {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+        }
+
+        /* ========== BUTTONS ========== */
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: inherit;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--accent-text);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-success {
+            background: var(--green);
+            color: white;
+        }
+
+        .btn-success:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-row .btn {
+            flex: 1;
+        }
+
+        /* ========== HISTORY ========== */
+        .history-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--glass-border);
+            transition: var(--transition);
+        }
+
+        .history-item:last-child {
+            border-bottom: none;
+        }
+
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .history-item .info {
+            flex: 1;
+        }
+
+        .history-item .info .name {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .history-item .info .meta {
+            font-size: 11px;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .history-item .status {
+            font-size: 10px;
+            padding: 2px 10px;
+            border-radius: 10px;
+        }
+
+        .history-item .status.completed {
+            background: rgba(0, 184, 148, 0.15);
+            color: #00b894;
+        }
+
+        .history-item .status.pending {
+            background: rgba(253, 121, 168, 0.15);
+            color: #fd79a8;
+        }
+
+        /* ========== REFERRAL ========== */
+        .referral-box {
+            padding: 16px;
+        }
+
+        .referral-box .link-box {
+            display: flex;
+            gap: 6px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 6px 10px;
+            margin: 8px 0;
+        }
+
+        .referral-box .link-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-size: 11px;
+            font-family: monospace;
+            outline: none;
+        }
+
+        .referral-box .link-box .copy-btn {
+            background: var(--accent);
+            color: var(--accent-text);
+            border: none;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* ========== EMPTY STATE ========== */
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .empty-state .icon {
+            font-size: 48px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 16px;
+            margin-top: 6px;
+        }
+
+        .empty-state p {
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        /* ========== LOADING ========== */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px 0;
+        }
+
+        .loading .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--glass-border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ========== TOAST ========== */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow);
+            z-index: 1000;
+            font-size: 13px;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            max-width: 90%;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 420px) {
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .setting-row {
+                grid-template-columns: 1fr;
+            }
+
+            .upload-types {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .template-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .quick-actions {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 4px;
+        }
+
+        /* File input hidden */
+        #fileInput {
+            display: none;
+        }
+
+        /* ========== BACK BUTTON ========== */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 13px;
+            margin-bottom: 12px;
+            transition: var(--transition);
+        }
+
+        .back-btn:hover {
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Background -->
+    <div class="bg-effects">
+        <div class="orb"></div>
+        <div class="orb"></div>
+        <div class="orb"></div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- APP -->
+    <div class="app-container">
+
+        <!-- ===== HEADER ===== -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">Fayda<span>ID</span></div>
+            </div>
+            <div class="header-right">
+                <div class="user-badge" id="userBadge">
+                    <div class="avatar" id="userAvatar">U</div>
+                    <span id="userName">User</span>
+                </div>
+                <button class="icon-btn" onclick="tg.close()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- ===== STATS BAR ===== -->
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-item glass" onclick="switchPage('history')">
+                <div class="value" id="statTotal">0</div>
+                <div class="label">Total IDs</div>
+            </div>
+            <div class="stat-item glass" onclick="switchPage('packages')">
+                <div class="value" id="statBalance">0</div>
+                <div class="label">Credits</div>
+            </div>
+            <div class="stat-item glass" onclick="switchPage('history')">
+                <div class="value" id="statUsed">0</div>
+                <div class="label">Used</div>
+            </div>
+            <div class="stat-item glass">
+                <div class="value" id="statToday">0</div>
+                <div class="label">Today</div>
+            </div>
+        </div>
+
+        <!-- ===== NAVIGATION ===== -->
+        <nav class="nav-menu">
+            <button class="nav-btn active" data-page="home" onclick="switchPage('home')">
+                <i class="fas fa-home"></i> Home
+            </button>
+            <button class="nav-btn" data-page="upload" onclick="switchPage('upload')">
+                <i class="fas fa-cloud-upload-alt"></i> Upload
+            </button>
+            <button class="nav-btn" data-page="templates" onclick="switchPage('templates')">
+                <i class="fas fa-layer-group"></i> Templates
+            </button>
+            <button class="nav-btn" data-page="history" onclick="switchPage('history')">
+                <i class="fas fa-clock"></i> History
+            </button>
+            <button class="nav-btn" data-page="packages" onclick="switchPage('packages')">
+                <i class="fas fa-gem"></i> Packages
+            </button>
+        </nav>
+
+        <!-- ===== PAGE: HOME ===== -->
+        <div id="page-home" class="page active">
+            <div class="quick-actions">
+                <button class="quick-action glass" onclick="switchPage('upload')">
+                    <span class="icon">📤</span>
+                    <span class="label">Upload ID</span>
+                    <span class="sub">Single or bulk</span>
+                </button>
+                <button class="quick-action glass" onclick="switchPage('packages')">
+                    <span class="icon">💳</span>
+                    <span class="label">Buy Credits</span>
+                    <span class="sub">Get more IDs</span>
+                </button>
+                <button class="quick-action glass" onclick="switchPage('templates')">
+                    <span class="icon">🎨</span>
+                    <span class="label">Templates</span>
+                    <span class="sub">Choose style</span>
+                </button>
+                <button class="quick-action glass" onclick="shareApp()">
+                    <span class="icon">👥</span>
+                    <span class="label">Invite Friends</span>
+                    <span class="sub">Earn free IDs</span>
+                </button>
+            </div>
+
+            <div class="glass" style="padding:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-weight:600; font-size:14px;">📈 Quick Stats</span>
+                    <span style="font-size:11px; color:var(--text-secondary);">Last 7 days</span>
+                </div>
+                <div style="display:flex; gap:4px; height:50px; align-items:flex-end;">
+                    <div style="flex:1; height:30%; background:var(--accent); border-radius:3px 3px 0 0; opacity:0.5;">
+                    </div>
+                    <div style="flex:1; height:50%; background:var(--accent); border-radius:3px 3px 0 0; opacity:0.6;">
+                    </div>
+                    <div style="flex:1; height:25%; background:var(--accent); border-radius:3px 3px 0 0; opacity:0.5;">
+                    </div>
+                    <div style="flex:1; height:70%; background:var(--accent); border-radius:3px 3px 0 0; opacity:0.7;">
+                    </div>
+                    <div style="flex:1; height:45%; background:var(--accent); border-radius:3px 3px 0 0; opacity:0.6;">
+                    </div>
+                    <div style="flex:1; height:60%; background:var(--accent); border-radius:3px 3px 0 0; opacity:0.7;">
+                    </div>
+                    <div style="flex:1; height:85%; background:var(--accent); border-radius:3px 3px 0 0; opacity:0.9;">
+                    </div>
+                </div>
+                <div
+                    style="display:flex; justify-content:space-between; font-size:9px; color:var(--text-secondary); margin-top:4px;">
+                    <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PAGE: UPLOAD ===== -->
+        <div id="page-upload" class="page">
+            <!-- Upload Types -->
+            <div class="upload-types">
+                <div class="upload-type glass active" onclick="selectUploadType('screenshot')">
+                    <span class="icon">📷</span>
+                    <span class="label">Screenshot</span>
+                    <span class="sub">Front &amp; Back</span>
+                </div>
+                <div class="upload-type glass" onclick="selectUploadType('bulk')">
+                    <span class="icon">📦</span>
+                    <span class="label">Bulk</span>
+                    <span class="sub">Up to 30 IDs</span>
+                    <span class="badge">NEW</span>
+                </div>
+                <div class="upload-type glass" onclick="selectUploadType('pdf')">
+                    <span class="icon">📄</span>
+                    <span class="label">PDF Upload</span>
+                    <span class="sub">Single or batch</span>
+                </div>
+            </div>
+
+            <!-- Upload Area -->
+            <div class="upload-area glass" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                <div class="icon" id="uploadIcon">📤</div>
+                <div class="title" id="uploadTitle">Drop files here or click to upload</div>
+                <div class="sub" id="uploadSub">Supports JPG, PNG, PDF, WEBP</div>
+                <div class="count" id="fileCount"></div>
+            </div>
+            <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.pdf,.webp,.bmp">
+
+            <!-- One Click Upload -->
+            <div class="upload-area glass" style="border-color:var(--accent); background:rgba(108,92,231,0.05);"
+                onclick="oneClickUpload()">
+                <div class="icon">⚡</div>
+                <div class="title">One Click Upload</div>
+                <div class="sub">Select files in any order. We auto-detect front, back &amp; screenshot!</div>
+            </div>
+
+            <!-- Upload Progress -->
+            <div id="uploadProgress" style="display:none; margin-top:12px;">
+                <div class="glass" style="padding:14px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                        <span style="font-size:13px; font-weight:500;">Uploading...</span>
+                        <span id="progressText" style="font-size:13px; color:var(--text-secondary);">0%</span>
+                    </div>
+                    <div style="height:4px; background:var(--glass-border); border-radius:2px; overflow:hidden;">
+                        <div id="progressBar"
+                            style="height:100%; width:0%; background:linear-gradient(90deg, #6c5ce7, #00b894); border-radius:2px; transition:width 0.3s;">
+                        </div>
+                    </div>
+                    <div id="uploadStatus" style="font-size:12px; color:var(--text-secondary); margin-top:6px;">
+                        Preparing files...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PAGE: TEMPLATES ===== -->
+        <div id="page-templates" class="page">
+            <div style="font-size:18px; font-weight:700; margin-bottom:12px;">🎨 Choose Template</div>
+            <div class="template-grid" id="templateGrid">
+                <div class="template-card glass active" onclick="selectTemplate('temp1')">
+                    <div class="preview" style="background: linear-gradient(135deg, #1a1a2e, #2d2d44);">
+                        <span>📄 v1</span>
+                    </div>
+                    <div class="name">Template 1</div>
+                    <div class="badge">Classic</div>
+                </div>
+                <div class="template-card glass" onclick="selectTemplate('temp2')">
+                    <div class="preview" style="background: linear-gradient(135deg, #1a1a2e, #2d2d44);">
+                        <span>📄 v2</span>
+                    </div>
+                    <div class="name">Template 2</div>
+                    <div class="badge">Modern</div>
+                </div>
+                <div class="template-card glass" onclick="selectTemplate('temp3')">
+                    <div class="preview" style="background: linear-gradient(135deg, #1a1a2e, #2d2d44);">
+                        <span>📄 v3</span>
+                    </div>
+                    <div class="name">Template 3</div>
+                    <div class="badge">Premium</div>
+                </div>
+            </div>
+
+            <!-- Print Settings -->
+            <div style="font-size:16px; font-weight:600; margin:16px 0 10px;">⚙️ Print Settings</div>
+            <div class="settings-grid">
+                <div class="setting-row">
+                    <div class="setting-group glass">
+                        <div class="label">🎨 Color Mode</div>
+                        <div class="options" id="colorOptions">
+                            <span class="opt active" onclick="setSetting('color', 'color')">Color</span>
+                            <span class="opt" onclick="setSetting('color', 'bw')">B&amp;W</span>
+                        </div>
+                    </div>
+                    <div class="setting-group glass">
+                        <div class="label">📄 Format</div>
+                        <div class="options" id="formatOptions">
+                            <span class="opt active" onclick="setSetting('format', 'png')">PNG</span>
+                            <span class="opt" onclick="setSetting('format', 'jpg')">JPG</span>
+                            <span class="opt" onclick="setSetting('format', 'pdf')">PDF</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-group glass">
+                        <div class="label">🔄 Layout</div>
+                        <div class="options" id="layoutOptions">
+                            <span class="opt" onclick="setSetting('layout', 'normal')">Normal</span>
+                            <span class="opt active" onclick="setSetting('layout', 'mirror')">Mirror</span>
+                        </div>
+                    </div>
+                    <div class="setting-group glass">
+                        <div class="label">📏 Quality</div>
+                        <div class="options" id="qualityOptions">
+                            <span class="opt" onclick="setSetting('quality', 'standard')">Standard</span>
+                            <span class="opt active" onclick="setSetting('quality', 'high')">High</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="applySettings()">✅ Apply Settings</button>
+        </div>
+
+        <!-- ===== PAGE: HISTORY ===== -->
+        <div id="page-history" class="page">
+            <div id="historyContent">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Loading history...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PAGE: PACKAGES (with 3-step checkout) ===== -->
+        <div id="page-packages" class="page">
+
+            <!-- Step Indicators -->
+            <div class="step-indicators" id="stepIndicators">
+                <div class="step-dot active" data-step="1"></div>
+                <div class="step-dot" data-step="2"></div>
+                <div class="step-dot" data-step="3"></div>
+            </div>
+
+            <!-- Step 1: Choose Package -->
+            <div class="checkout-step active" data-step="1">
+                <div style="font-size:18px; font-weight:700; margin-bottom:12px;">💎 Choose Package</div>
+                <div class="packages" id="packageList">
+                    <div class="package glass" data-credits="1" data-price="20" onclick="selectPackage(this)">
+                        <div class="info">
+                            <div class="title">1 ID</div>
+                            <div class="desc">Single ID generation</div>
+                        </div>
+                        <div class="price">20 <span class="currency">ETB</span></div>
+                    </div>
+                    <div class="package glass" data-credits="3" data-price="50" onclick="selectPackage(this)">
+                        <div class="info">
+                            <div class="title">3 IDs</div>
+                            <div class="desc">Save 17%</div>
+                            <div class="save-badge">🔥 Save 10 ETB</div>
+                        </div>
+                        <div class="price">50 <span class="currency">ETB</span></div>
+                    </div>
+                    <div class="package glass" data-credits="5" data-price="80" onclick="selectPackage(this)">
+                        <div class="info">
+                            <div class="title">5 IDs</div>
+                            <div class="desc">Save 20%</div>
+                            <div class="save-badge">🔥 Save 20 ETB</div>
+                        </div>
+                        <div class="price">80 <span class="currency">ETB</span></div>
+                    </div>
+                    <div class="package glass selected" data-credits="10" data-price="150"
+                        onclick="selectPackage(this)">
+                        <div class="info">
+                            <div class="title">10 IDs</div>
+                            <div class="desc">🔥 Best Value</div>
+                            <div class="save-badge">🔥 Save 50 ETB</div>
+                        </div>
+                        <div class="price">150 <span class="currency">ETB</span></div>
+                    </div>
+                    <div class="package glass" data-credits="30" data-price="499" onclick="selectPackage(this)">
+                        <div class="info">
+                            <div class="title">30 IDs</div>
+                            <div class="desc">🔥 Best Value</div>
+                            <div class="save-badge">🔥 Save 101 ETB</div>
+                        </div>
+                        <div class="price">499 <span class="currency">ETB</span></div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="goToStep(2)">Continue →</button>
+            </div>
+
+            <!-- Step 2: Choose Payment Method -->
+            <div class="checkout-step" data-step="2">
+                <div class="back-btn" onclick="goToStep(1)"><i class="fas fa-arrow-left"></i> Back</div>
+                <div style="font-size:18px; font-weight:700; margin-bottom:12px;">💳 Payment Method</div>
+                <div class="payment-methods">
+                    <div class="payment-method glass selected" onclick="selectPayment('telebirr')">
+                        <div class="icon">📱</div>
+                        <div class="info">
+                            <div class="name">Telebirr</div>
+                            <div class="desc">Pay using Telebirr mobile money</div>
+                        </div>
+                        <div class="check"><i class="fas fa-check-circle"></i></div>
+                    </div>
+                    <div class="payment-method glass" onclick="selectPayment('cbe')">
+                        <div class="icon">🏦</div>
+                        <div class="info">
+                            <div class="name">CBE Birr</div>
+                            <div class="desc">Pay using Commercial Bank of Ethiopia</div>
+                        </div>
+                        <div class="check"><i class="fas fa-check-circle"></i></div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="goToStep(3)">Continue →</button>
+            </div>
+
+            <!-- Step 3: Transaction Details -->
+            <div class="checkout-step" data-step="3">
+                <div class="back-btn" onclick="goToStep(2)"><i class="fas fa-arrow-left"></i> Back</div>
+                <div style="font-size:18px; font-weight:700; margin-bottom:4px;">📝 Payment Details</div>
+                <div style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;">
+                    Pay <strong id="paymentAmount">150 ETB</strong> for <strong id="paymentCredits">10</strong> credits
+                </div>
+
+                <div class="transaction-input glass">
+                    <div class="label">📱 Payment Method</div>
+                    <div style="font-size:13px; font-weight:600; color:var(--accent);" id="selectedPaymentMethod">
+                        Telebirr</div>
+                    <div style="font-size:12px; color:var(--text-secondary); margin:4px 0 10px;">Send to: <strong
+                            id="paymentNumber">0943686869</strong> (Ermias Shumi)</div>
+
+                    <div class="label">📋 Transaction ID / Link</div>
+                    <div class="sub">Paste your transaction link or ID from Telebirr/CBE</div>
+                    <textarea id="transactionInput" placeholder="Paste your transaction info here..."></textarea>
+                    <div class="example">Example: https://transactioninfo.ethiotelecom.et/...</div>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-top:12px;">
+                    <button class="btn btn-secondary" onclick="goToStep(2)">Back</button>
+                    <button class="btn btn-success" onclick="submitPayment()">✅ Submit Payment</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // =============================================
+        // INIT TELEGRAM
+        // =============================================
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+
+        const user = tg.initDataUnsafe.user || { id: 12345, first_name: 'User' };
+        const API_BASE = 'http://localhost:7860'; // CHANGE TO YOUR VPS IP
+
+        // =============================================
+        // STATE
+        // =============================================
+        let selectedPackage = { credits: 10, price: 150 };
+        let selectedPayment = 'telebirr';
+        let currentStep = 1;
+        let uploadedFiles = [];
+        let uploadType = 'screenshot';
+
+        // =============================================
+        // HELPERS
+        // =============================================
+        function getInitials(name) {
+            if (!name) return 'U';
+            const parts = name.split(' ');
+            if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+            return name.substring(0, 2).toUpperCase();
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'Unknown';
+            const d = new Date(dateStr);
+            const now = new Date();
+            const diff = (now - d) / (1000 * 60 * 60 * 24);
+            if (diff < 1) return 'Today';
+            if (diff < 2) return 'Yesterday';
+            if (diff < 7) return `${Math.floor(diff)}d ago`;
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // =============================================
+        // API CALLS
+        // =============================================
+        async function fetchDashboard() {
+            try {
+                const res = await fetch(`${API_BASE}/api/dashboard`, {
+                    headers: { 'X-User-Id': user.id }
+                });
+                return await res.json();
+            } catch (e) {
+                console.error('Dashboard error:', e);
+                return null;
+            }
+        }
+
+        async function fetchHistory() {
+            try {
+                const res = await fetch(`${API_BASE}/api/history`, {
+                    headers: { 'X-User-Id': user.id }
+                });
+                return await res.json();
+            } catch (e) {
+                console.error('History error:', e);
+                return null;
+            }
+        }
+
+        // =============================================
+        // RENDER
+        // =============================================
+        function renderHeader() {
+            document.getElementById('userAvatar').textContent = getInitials(user.first_name);
+            document.getElementById('userName').textContent = user.first_name || 'User';
+        }
+
+        async function renderStats() {
+            const data = await fetchDashboard();
+            if (data) {
+                document.getElementById('statTotal').textContent = data.total_generated || 0;
+                document.getElementById('statBalance').textContent = data.balance || 0;
+                document.getElementById('statUsed').textContent = data.total_generated || 0;
+                document.getElementById('statToday').textContent = data.today || 0;
+            }
+        }
+
+        async function renderHistory() {
+            const container = document.getElementById('historyContent');
+            const history = await fetchHistory();
+
+            if (!history || history.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📭</div>
+                        <h3>No IDs Yet</h3>
+                        <p>Upload your first ID to get started</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                    ${history.slice(0, 20).map(item => `
+                        <div class="history-item glass">
+                            <div style="font-size:20px;">📄</div>
+                            <div class="info">
+                                <div class="name">${item.en_name || item.am_name || 'Unknown'}</div>
+                                <div class="meta">
+                                    <span>🆔 ${item.fcn || 'N/A'}</span>
+                                    <span>📅 ${formatDate(item.generated_at)}</span>
+                                </div>
+                            </div>
+                            <span class="status completed">✓ Done</span>
+                            <button class="download-btn" onclick="downloadFile('${item.file_path || ''}')">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // =============================================
+        // NAVIGATION
+        // =============================================
+        function switchPage(page) {
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.page === page);
+            });
+            document.querySelectorAll('.page').forEach(p => {
+                p.classList.toggle('active', p.id === `page-${page}`);
+            });
+
+            if (page === 'history') renderHistory();
+            if (page === 'packages') {
+                currentStep = 1;
+                updateStepUI();
+            }
+        }
+
+        // =============================================
+        // UPLOAD TYPES
+        // =============================================
+        function selectUploadType(type) {
+            uploadType = type;
+            document.querySelectorAll('.upload-type').forEach(el => {
+                el.classList.toggle('active', el.dataset.type === type);
+            });
+
+            const icons = {
+                screenshot: '📷',
+                bulk: '📦',
+                pdf: '📄'
+            };
+            const titles = {
+                screenshot: 'Upload front & back images',
+                bulk: 'Upload up to 30 IDs at once',
+                pdf: 'Upload PDF file(s)'
+            };
+            const subs = {
+                screenshot: 'Supports JPG, PNG, WEBP',
+                bulk: 'Batch processing supported',
+                pdf: 'Single or multiple PDFs'
+            };
+
+            document.getElementById('uploadIcon').textContent = icons[type];
+            document.getElementById('uploadTitle').textContent = titles[type];
+            document.getElementById('uploadSub').textContent = subs[type];
+
+            const input = document.getElementById('fileInput');
+            if (type === 'pdf') {
+                input.accept = '.pdf';
+            } else {
+                input.accept = '.jpg,.jpeg,.png,.webp,.bmp';
+            }
+        }
+
+        function oneClickUpload() {
+            showToast('⚡ One Click Upload: Select files in any order');
+            document.getElementById('fileInput').click();
+        }
+
+        // =============================================
+        // FILE UPLOAD
+        // =============================================
+        document.getElementById('fileInput').addEventListener('change', async function (e) {
+            if (this.files.length === 0) return;
+
+            const files = Array.from(this.files);
+            const progress = document.getElementById('uploadProgress');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const statusText = document.getElementById('uploadStatus');
+
+            progress.style.display = 'block';
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const pct = Math.round(((i + 1) / files.length) * 100);
+                progressBar.style.width = pct + '%';
+                progressText.textContent = pct + '%';
+                statusText.textContent = `Processing ${file.name}...`;
+
+                try {
+                    const formData = new FormData();
+                    formData.append('document', file);
+                    formData.append('chat_id', user.id);
+
+                    showToast(`📤 ${file.name} uploaded (${uploadType})`);
+                } catch (err) {
+                    console.error('Upload error:', err);
+                }
+
+                await new Promise(r => setTimeout(r, 200));
+            }
+
+            setTimeout(() => {
+                progress.style.display = 'none';
+                progressBar.style.width = '0%';
+                showToast(`✅ ${files.length} file(s) uploaded successfully!`);
+                this.value = '';
+            }, 500);
+        });
+
+        // Drag and drop
+        const dropZone = document.getElementById('dropZone');
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files);
+            if (files.length > 0) {
+                const input = document.getElementById('fileInput');
+                const dt = new DataTransfer();
+                files.forEach(f => dt.items.add(f));
+                input.files = dt.files;
+                input.dispatchEvent(new Event('change'));
+            }
+        });
+
+        // =============================================
+        // CHECKOUT (3-Step)
+        // =============================================
+        function selectPackage(el) {
+            document.querySelectorAll('.package').forEach(p => p.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedPackage.credits = parseInt(el.dataset.credits);
+            selectedPackage.price = parseInt(el.dataset.price);
+
+            document.getElementById('paymentAmount').textContent = `${selectedPackage.price} ETB`;
+            document.getElementById('paymentCredits').textContent = selectedPackage.credits;
+        }
+
+        function selectPayment(method) {
+            selectedPayment = method;
+            document.querySelectorAll('.payment-method').forEach(el => {
+                el.classList.toggle('selected', el.dataset.method === method);
+            });
+
+            const names = {
+                telebirr: 'Telebirr',
+                cbe: 'CBE Birr'
+            };
+            const numbers = {
+                telebirr: '0943686869',
+                cbe: '0943686869'
+            };
+
+            document.getElementById('selectedPaymentMethod').textContent = names[method];
+            document.getElementById('paymentNumber').textContent = numbers[method];
+        }
+
+        function goToStep(step) {
+            if (step === 2 && !selectedPackage.credits) {
+                showToast('⚠️ Please select a package first');
+                return;
+            }
+            if (step === 3 && !selectedPayment) {
+                showToast('⚠️ Please select a payment method');
+                return;
+            }
+
+            currentStep = step;
+            updateStepUI();
+        }
+
+        function updateStepUI() {
+            document.querySelectorAll('.step-dot').forEach((dot, index) => {
+                const stepNum = index + 1;
+                dot.classList.remove('active', 'done');
+                if (stepNum === currentStep) dot.classList.add('active');
+                if (stepNum < currentStep) dot.classList.add('done');
+            });
+
+            document.querySelectorAll('.checkout-step').forEach(el => {
+                el.classList.toggle('active', parseInt(el.dataset.step) === currentStep);
+            });
+        }
+
+        function submitPayment() {
+            const transactionText = document.getElementById('transactionInput').value.trim();
+            if (!transactionText) {
+                showToast('⚠️ Please enter your transaction ID or link');
+                return;
+            }
+
+            const message = `💰 **Payment Request**\n\nUser: ${user.first_name} (ID: ${user.id})\nPackage: ${selectedPackage.credits} credits\nAmount: ${selectedPackage.price} ETB\nMethod: ${selectedPayment}\nTransaction: ${transactionText}`;
+
+            tg.sendData(JSON.stringify({
+                type: 'payment',
+                user_id: user.id,
+                credits: selectedPackage.credits,
+                amount: selectedPackage.price,
+                method: selectedPayment,
+                transaction: transactionText
+            }));
+
+            showToast('✅ Payment submitted! Admin will verify shortly.');
+
+            document.getElementById('transactionInput').value = '';
+            goToStep(1);
+        }
+
+        // =============================================
+        // TEMPLATES
+        // =============================================
+        function selectTemplate(template) {
+            document.querySelectorAll('.template-card').forEach(c => {
+                c.classList.toggle('active', c.dataset.template === template);
+            });
+            showToast(`✅ Template ${template} selected`);
+        }
+
+        // =============================================
+        // SETTINGS
+        // =============================================
+        function setSetting(category, value) {
+            const optionsMap = {
+                color: 'colorOptions',
+                format: 'formatOptions',
+                layout: 'layoutOptions',
+                quality: 'qualityOptions'
+            };
+
+            const container = document.getElementById(optionsMap[category]);
+            if (container) {
+                container.querySelectorAll('.opt').forEach(el => {
+                    el.classList.toggle('active', el.textContent.toLowerCase() === value || el.textContent === value);
+                });
+            }
+        }
+
+        function applySettings() {
+            showToast(`✅ Settings applied`);
+            fetch(`${API_BASE}/api/settings`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-User-Id': user.id
+                },
+                body: JSON.stringify({
+                    color: document.querySelector('#colorOptions .opt.active')?.textContent || 'color',
+                    format: document.querySelector('#formatOptions .opt.active')?.textContent || 'png',
+                    layout: document.querySelector('#layoutOptions .opt.active')?.textContent || 'mirror',
+                    quality: document.querySelector('#qualityOptions .opt.active')?.textContent || 'high'
+                })
+            }).catch(e => console.error('Settings error:', e));
+        }
+
+        // =============================================
+        // ACTIONS
+        // =============================================
+        function shareApp() {
+            const link = `https://t.me/AI_BIN_BOT?start=ref_${user.id}`;
+            tg.showPopup({
+                title: '👥 Invite Friends',
+                message: `Share this link:\n${link}`,
+                buttons: [{ type: 'ok' }]
+            });
+        }
+
+        function downloadFile(filePath) {
+            if (filePath) {
+                showToast('📥 Downloading...');
+                tg.openTelegramLink(`https://t.me/AI_BIN_BOT?start=download_${encodeURIComponent(filePath)}`);
+            } else {
+                showToast('⚠️ File not available');
+            }
+        }
+
+        // =============================================
+        // INIT
+        // =============================================
+        renderHeader();
+        renderStats();
+        renderHistory();
+        selectPackage(document.querySelector('.package.selected'));
+        selectPayment('telebirr');
+        updateStepUI();
+        selectUploadType('screenshot');
+
+        setInterval(renderStats, 30000);
+    </script>
+</body>
+
+</html>
